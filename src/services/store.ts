@@ -23,7 +23,15 @@ export const store = reactive<Store>({
   theme: 'light'
 })
 
+export interface RepoHistory {
+  fullName: string
+  owner: string
+  name: string
+  lastUsed: number
+}
+
 const PAT_KEY = 'pageup-pat'
+const REPO_HISTORY_KEY = 'pageup-repo-history'
 
 export function setAuthToken(token: string) {
   store.token = token
@@ -53,4 +61,34 @@ export function setTheme(theme: 'light' | 'dark') {
 
 export function getSavedTheme(): 'light' | 'dark' {
   return (localStorage.getItem('pageup-theme') as 'light' | 'dark') || 'light'
+}
+
+export function saveRepoToHistory(fullName: string, owner: string, name: string) {
+  const history = getRepoHistory()
+  const existingIndex = history.findIndex(h => h.fullName === fullName)
+  
+  if (existingIndex >= 0) {
+    history[existingIndex].lastUsed = Date.now()
+  } else {
+    history.push({ fullName, owner, name, lastUsed: Date.now() })
+  }
+  
+  history.sort((a, b) => b.lastUsed - a.lastUsed)
+  
+  const trimmedHistory = history.slice(0, 10)
+  localStorage.setItem(REPO_HISTORY_KEY, JSON.stringify(trimmedHistory))
+}
+
+export function getRepoHistory(): RepoHistory[] {
+  const data = localStorage.getItem(REPO_HISTORY_KEY)
+  return data ? JSON.parse(data) : []
+}
+
+export function removeFromRepoHistory(fullName: string) {
+  const history = getRepoHistory().filter(h => h.fullName !== fullName)
+  localStorage.setItem(REPO_HISTORY_KEY, JSON.stringify(history))
+}
+
+export function clearRepoHistory() {
+  localStorage.removeItem(REPO_HISTORY_KEY)
 }

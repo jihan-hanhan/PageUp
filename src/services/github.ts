@@ -70,7 +70,7 @@ export async function saveDocument(
   content: string,
   sha?: string,
   branch?: string
-): Promise<void> {
+): Promise<{ sha: string }> {
   const body: Record<string, unknown> = {
     message: `Update ${path}`,
     content: btoa(content),
@@ -87,6 +87,8 @@ export async function saveDocument(
     body: JSON.stringify(body)
   })
   if (!response.ok) throw new Error(`Failed to save document: ${response.status}`)
+  const data = await response.json()
+  return { sha: data.content.sha }
 }
 
 export async function deleteDocument(

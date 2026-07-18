@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import type { Document, Repository } from '@/types'
-import { store, clearAuth } from '@/services/store'
+import { store, clearAuth, saveRepoToHistory, getRepoHistory, removeFromRepoHistory, type RepoHistory } from '@/services/store'
 import { getRepository, listDocuments, getDocument, saveDocument, deleteDocument } from '@/services/github'
 
 const emit = defineEmits<{
@@ -24,6 +24,8 @@ const saveMessageText = ref('')
 const saveMessageType = ref<'success' | 'error'>('success')
 const editingNameIndex = ref<number | null>(null)
 const editingNameValue = ref('')
+const repoHistory = ref<RepoHistory[]>([])
+const showRepoHistory = ref(false)
 
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768
@@ -36,15 +38,30 @@ function checkMobile() {
   }
 }
 
+function handleClickOutside(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  const wrapper = document.querySelector('.repo-select-wrapper')
+  if (wrapper && !wrapper.contains(target)) {
+    showRepoHistory.value = false
+  }
+}
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  window.addEventListener('click', handleClickOutside)
   initSidebarResizer()
   initMobileSwipe()
+  loadRepoHistory()
 })
+
+function loadRepoHistory() {
+  repoHistory.value = getRepoHistory()
+}
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  window.removeEventListener('click', handleClickOutside)
 })
 
 async function handleConnect() {
@@ -60,6 +77,9 @@ async function handleConnect() {
   try {
     const repository = await getRepository(store.token, owner, repo)
     store.currentRepository = repository
+    saveRepoToHistory(`${owner}/${repo}`, owner, repo)
+    loadRepoHistory()
+    showRepoHistory.value = false
     await loadDocuments()
     showToast(`Connected to ${owner}/${repo}`, 'success')
   } catch (error) {
@@ -67,6 +87,18 @@ async function handleConnect() {
   } finally {
     isConnecting.value = false
   }
+}
+
+async function selectFromHistory(historyItem: RepoHistory) {
+  repoInput.value = historyItem.fullName
+  showRepoHistory.value = false
+  await handleConnect()
+}
+
+function removeHistoryItem(fullName: string, event: MouseEvent) {
+  event.stopPropagation()
+  removeFromRepoHistory(fullName)
+  loadRepoHistory()
 }
 
 async function loadDocuments() {
@@ -148,11 +180,20 @@ async function pushDoc() {
   if (selectedDocIndex.value === null || !store.currentRepository || !store.token) return
   
   const doc = documents.value[selectedDocIndex.value]
+  doc.hasDraft = true
+  updatePendingCount()
   isLoading.value = true
   
   try {
-    await saveDocument(store.token, store.currentRepository.owner.login, store.currentRepository.name, doc.path, doc.content, doc.sha)
+    if (doc.oldPath && doc.sha) {
+      await deleteDocument(store.token, store.currentRepository.owner.login, store.currentRepository.name, doc.oldPath, doc.sha)
+    }
+    
+    const result = await saveDocument(store.token, store.currentRepository.owner.login, store.currentRepository.name, doc.path, doc.content, doc.isNew ? undefined : doc.sha)
+    doc.sha = result.sha
+    doc.oldPath = undefined
     doc.hasDraft = false
+    doc.isNew = false
     updatePendingCount()
     showToast('Pushed to GitHub ✓', 'success')
   } catch (error) {
@@ -167,12 +208,17 @@ async function pushAll() {
   
   showToast('Pushing all changes...', 'success')
   
-  const draftDocs = documents.value.filter(d => d.hasDraft)
-  
-  for (const doc of draftDocs) {
+  for (const doc of documents.value) {
     try {
-      await saveDocument(store.token, store.currentRepository.owner.login, store.currentRepository.name, doc.path, doc.content, doc.sha)
+      if (doc.oldPath && doc.sha) {
+        await deleteDocument(store.token, store.currentRepository.owner.login, store.currentRepository.name, doc.oldPath, doc.sha)
+      }
+      
+      const result = await saveDocument(store.token, store.currentRepository.owner.login, store.currentRepository.name, doc.path, doc.content, doc.isNew ? undefined : doc.sha)
+      doc.sha = result.sha
+      doc.oldPath = undefined
       doc.hasDraft = false
+      doc.isNew = false
     } catch {
       showToast('Some files failed to push', 'error')
       break
@@ -212,8 +258,14 @@ function confirmRename(index: number) {
   
   const oldName = documents.value[index].name
   const oldPath = documents.value[index].path
+  const newPath = oldPath.replace(oldName, newName)
+  
+  if (newPath !== oldPath && documents.value[index].sha) {
+    documents.value[index].oldPath = oldPath
+  }
+  
   documents.value[index].name = newName
-  documents.value[index].path = oldPath.replace(oldName, newName)
+  documents.value[index].path = newPath
   documents.value[index].hasDraft = true
   updatePendingCount()
   
@@ -538,13 +590,29 @@ watch(() => store.theme, (newTheme) => {
           <span class="icon-moon">🌙</span>
           <span class="icon-sun">☀️</span>
         </button>
-        <input
-          v-model="repoInput"
-          type="text"
-          placeholder="owner/repo"
-          class="repo-select"
-          @keyup.enter="handleConnect"
-        />
+        <div class="repo-select-wrapper">
+          <input
+            v-model="repoInput"
+            type="text"
+            placeholder="owner/repo"
+            class="repo-select"
+            @keyup.enter="handleConnect"
+            @focus="showRepoHistory = true"
+          />
+          <button class="repo-history-btn" @click="showRepoHistory = !showRepoHistory" title="History">📜</button>
+          
+          <div v-if="showRepoHistory && repoHistory.length > 0" class="repo-history-dropdown">
+            <div
+              v-for="item in repoHistory"
+              :key="item.fullName"
+              @click="selectFromHistory(item)"
+              class="repo-history-item"
+            >
+              <span class="repo-history-name">{{ item.fullName }}</span>
+              <button class="btn btn-icon btn-xs" @click="removeHistoryItem(item.fullName, $event)" title="Remove">✕</button>
+            </div>
+          </div>
+        </div>
         <button @click="handleConnect" :disabled="isConnecting" class="btn btn-primary btn-sm">
           <span v-if="isConnecting"><span class="spinner"></span></span>
           <span v-else>Connect</span>
@@ -751,10 +819,15 @@ watch(() => store.theme, (newTheme) => {
   align-items: center;
 }
 
-.repo-select {
+.repo-select-wrapper {
+  position: relative;
   width: 100%;
   max-width: 300px;
-  padding: 8px 12px;
+}
+
+.repo-select {
+  width: 100%;
+  padding: 8px 40px 8px 12px;
   border: 2px solid var(--input-border);
   border-radius: 8px;
   font-size: 0.9rem;
@@ -768,6 +841,61 @@ watch(() => store.theme, (newTheme) => {
 .repo-select:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.repo-history-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.repo-history-btn:hover {
+  background: var(--bg-hover);
+}
+
+.repo-history-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-surface);
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.repo-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.repo-history-item:hover {
+  background: var(--bg-hover);
+}
+
+.repo-history-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .header-right {

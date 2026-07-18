@@ -24,6 +24,7 @@ export interface Document {
   name: string
   content: string
   path: string
+  oldPath?: string
   sha?: string
   lastModified?: number
   isNew?: boolean
