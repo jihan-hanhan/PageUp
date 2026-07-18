@@ -17,11 +17,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          # 核心修复：升级为 Node 22，以完美兼容 pnpm 11+ (要求 Node >= 22.13)
+          # 核心修复 1：必须使用 Node 22，以兼容 pnpm 11+ (Node 20 会导致 pnpm 崩溃)
           node-version: '22' 
 
       - name: Enable corepack
         run: corepack enable
+        # 核心修复 2：删除了 "npm install -g pnpm"，corepack 会自动处理，重复安装会报错
 
       - name: Install Node dependencies
         run: pnpm install
@@ -46,11 +47,17 @@ jobs:
 
       - name: Install Android NDK and Build Tools
         run: |
-          # 使用 sdkmanager 精确安装所需的 NDK、构建工具和平台版本，避免 Action 参数不兼容
+          # 使用 sdkmanager 精确安装，比 action 参数更稳定可靠
           sdkmanager "ndk;26.1.10909125" "build-tools;34.0.0" "platforms;android-34"
 
       - name: Set up cargo-ndk
         run: cargo install cargo-ndk
+
+      # 核心修复 3：在 build 之前，必须先初始化 Tauri Android 项目
+      - name: Initialize Tauri Android Project
+        run: pnpm tauri android init
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
 
       - name: Build Android APK
         run: |
@@ -65,6 +72,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pageup-android
-          # 如果构建日志显示输出在 universal 目录，请将路径改为:
-          # src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
-          path: src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          # Tauri v2 默认通常会生成 universal APK。如果此路径找不到文件，
+          # 请查看上一步日志中的 "Finished 1 APK at:" 提示，并修改为对应的路径
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
