@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>PageUp - UI Preview</title>
+  <style>
+    /* ===== Theme Variables ===== */
+    /* Light mode (default) */
+    :root {
+      --bg-main: #f5f5f5;
+      --bg-surface: white;
+      --bg-surface-alt: #fafafa;
+      --bg-hover: #f5f5f5;
+      --bg-active: #e8eaf6;
+      --text-primary: #333;
+      --text-secondary: #666;
+      --text-muted: #999;
+      --border: #e0e0e0;
+      --border-light: #f0f0f0;
+      --accent: #8DD6E0;
+      --accent-text: white;
+      --code-bg: #f4f4f4;
+      --code-block-bg: #2d2d2d;
+      --code-block-text: #f8f8f2;
+      --shadow-color: rgba(0, 0, 0, 0.05);
+      --input-bg: white;
+      --input-border: #e0e0e0;
+      --draft-badge-bg: #fef3c7;
+      --draft-badge-text: #92400e;
+      --status-draft-text: #92400e;
+      --status-draft-bg: #fef3c7;
+      --status-unsaved-text: #991b1b;
+      --status-unsaved-bg: #fee2e2;
+      --status-clean-text: #065f46;
+      --status-clean-bg: #d1fae5;
+      --scrollbar-thumb: #c0c0c0;
+      --scrollbar-thumb-hover: #a0a0a0;
+      --divider-line: #e0e0e0;
+      --auth-bg: #f2f2f2;
+      --auth-container-bg: #f2f2f2;
+      --backdrop-bg: rgba(0, 0, 0, 0.3);
+      --save-success-bg: #d1fae5;
+      --save-success-text: #065f46;
+      --save-error-bg: #fee2e2;
+      --save-error-text: #991b1b;
+    }
+
+    /* Dark mode - main colors #2f2f2f and #0c0c0c */
+    [data-theme="dark"] {
+      --bg-main: #0c0c0c;
+      --bg-surface: #2f2f2f;
+      --bg-surface-alt: #262626;
+      --bg-hover: #383838;
+      --bg-active: #3a3a3a;
+      --text-primary: #e0e0e0;
+      --text-secondary: #b0b0b0;
+      --text-muted: #808080;
+      --border: #3a3a3a;
+      --border-light: #333;
+      --accent: #8DD6E0;
+      --accent-text: #0c0c0c;
+      --code-bg: #1a1a1a;
+      --code-block-bg: #1a1a1a;
+      --code-block-text: #f8f8f2;
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --input-bg: #262626;
+      --input-border: #3a3a3a;
+      --draft-badge-bg: #4a3a1a;
+      --draft-badge-text: #fbbf24;
+      --status-draft-text: #fbbf24;
+      --status-draft-bg: #4a3a1a;
+      --status-unsaved-text: #f87171;
+      --status-unsaved-bg: #4a1a1a;
+      --status-clean-text: #34d399;
+      --status-clean-bg: #1a3a2a;
+      --scrollbar-thumb: #4a4a4a;
+      --scrollbar-thumb-hover: #5a5a5a;
+      --divider-line: #3a3a3a;
+      --auth-bg: #0c0c0c;
+      --auth-container-bg: #2f2f2f;
+      --backdrop-bg: rgba(0, 0, 0, 0.5);
+      --save-success-bg: #1a3a2a;
+      --save-success-text: #34d399;
+      --save-error-bg: #4a1a1a;
+      --save-error-text: #f87171;
+    }
+
+    /* ===== Global Styles ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    #app {
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    button {
+      -webkit-user-select: none;
+      user-select: none;
+      font-family: inherit;
+    }
+
+    .doc-item, .tab {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+    /* ===== Common Button Styles ===== */
+    .btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #8DD6E0;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px #2f2f2f30;
+    }
+
+    .btn-save {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .btn-save {
+      background: #3a3a3a;
+      color: var(--text-primary);
+    }
+
+    .btn-save:hover:not(:disabled) { background: var(--border); }
+
+    .btn-push {
+      background: #238636;
+      color: white;
+    }
+
+    .btn-push:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px #2f2f2f30;
+    }
+
+    .btn-push-all {
+      background: #238636;
+      color: white;
+      position: relative;
+    }
+
+    .btn-push-all:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px #2f2f2f30;
+    }
+
+    .btn-icon {
+      padding: 8px 10px;
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .btn-icon {
+      background: #3a3a3a;
+    }
+
+    .btn-icon:hover { background: var(--border); }
+
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    .badge {
+      background: rgba(255, 255, 255, 0.3);
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== Theme Toggle Button ===== */
+    .theme-toggle {
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+
+    [data-theme="dark"] .theme-toggle {
+      background: #3a3a3a;
+    }
+
+    .theme-toggle:hover {
+      background: var(--border);
+      transform: scale(1.05);
+    }
+
+    .theme-toggle .icon-sun { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+    /* ===== Auth View ===== */
+    .auth-view {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--auth-bg);
+      padding: 16px;
+      transition: background-color 0.3s;
+    }
+
+    .auth-container {
+      background: var(--auth-container-bg);
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 450px;
+      transition: background-color 0.3s;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo h1 {
+      font-size: 2.5rem;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .logo p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+      font-family: inherit;
+      background: var(--input-bg);
+      color: var(--text-primary);
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .form-group .hint {
+      display: block;
+      margin-top: 8px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .btn-github {
+      width: 100%;
+      padding: 14px 20px;
+      background: #24292e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: inherit;
+    }
+
+    .btn-github:hover {
+      background: #30363d;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(36, 41, 46, 0.4);
+    }
+
+    .github-icon {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--divider-line);
+    }
+
+    .divider::before { margin-right: 16px; }
+    .divider::after { margin-left: 16px; }
+
+    .btn-full {
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .error-message {
+      background: var(--save-error-bg);
+      color: var(--save-error-text);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    /* ===== Main View ===== */
+    .main-view {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--bg-main);
+      transition: background-color 0.3s;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 4px var(--shadow-color);
+      flex-shrink: 0;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-primary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+
+    .menu-btn:hover { background: var(--bg-hover); }
+
+    .app-title {
+      font-size: 1.2rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .header-center {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      min-width: 0;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .repo-select {
+      width: 100%;
+      max-width: 300px;
+      padding: 8px 12px;
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+
+    .repo-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sidebar {
+      width: 280px;
+      min-width: 180px;
+      max-width: 500px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-header h2 {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .doc-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .doc-item:hover { background: var(--bg-hover); }
+    .doc-item.active { background: var(--bg-active); }
+
+    .doc-item.has-draft {
+      position: relative;
+    }
+
+    .doc-item.has-draft::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: #f59e0b;
+      border-radius: 2px;
+    }
+
+    .doc-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .doc-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.88rem;
+      color: var(--text-primary);
+    }
+
+    .draft-badge {
+      background: var(--draft-badge-bg);
+      color: var(--draft-badge-text);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .doc-size {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state p { margin-bottom: 8px; }
+
+    .empty-state .hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== Resizable Divider ===== */
+    .sidebar-resizer {
+      width: 6px;
+      cursor: col-resize;
+      background: transparent;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+      transition: background 0.2s;
+    }
+
+    .sidebar-resizer::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      background: var(--border);
+      transition: background 0.2s, width 0.2s;
+    }
+
+    .sidebar-resizer:hover::after,
+    .sidebar-resizer.dragging::after {
+      background: var(--accent);
+      width: 3px;
+    }
+
+    .sidebar-resizer:hover,
+    .sidebar-resizer.dragging {
+      background: var(--bg-hover);
+    }
+
+    .editor-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .backdrop {
+      display: none;
+    }
+
+    /* ===== Editor ===== */
+    .editor-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .no-doc-selected {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .no-doc-selected .icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .no-doc-selected h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: var(--text-secondary);
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .back-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0 8px;
+      font-family: inherit;
+    }
+
+    .doc-title-input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 12px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: transparent;
+      color: var(--text-primary);
+      transition: border-color 0.3s, background-color 0.3s;
+      font-family: inherit;
+    }
+
+    .doc-title-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--bg-surface-alt);
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .status-bar {
+      display: flex;
+      padding: 6px 12px;
+      background: var(--bg-surface-alt);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .status-draft {
+      color: var(--status-draft-text);
+      background: var(--status-draft-bg);
+    }
+
+    .status-unsaved {
+      color: var(--status-unsaved-text);
+      background: var(--status-unsaved-bg);
+    }
+
+    .status-clean {
+      color: var(--status-clean-text);
+      background: var(--status-clean-bg);
+    }
+
+    .editor-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .editor-tabs {
+      display: flex;
+      background: var(--border-light);
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.3s;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+      font-family: inherit;
+    }
+
+    .tab:hover { background: var(--bg-hover); }
+
+    .tab.active {
+      background: var(--bg-surface);
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .editor-content {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .text-editor {
+      width: 100%;
+      height: 100%;
+      padding: 16px;
+      border: none;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .text-editor:focus { outline: none; }
+    .text-editor::placeholder { color: var(--text-muted); }
+
+    .preview-content {
+      height: 100%;
+      overflow-y: auto;
+      padding: 16px;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .preview-content h1,
+    .preview-content h2,
+    .preview-content h3 {
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .preview-content h1 { font-size: 1.6rem; }
+    .preview-content h2 { font-size: 1.3rem; }
+    .preview-content h3 { font-size: 1.1rem; }
+
+    .preview-content p { margin-bottom: 12px; }
+
+    .preview-content ul,
+    .preview-content ol {
+      margin-bottom: 12px;
+      padding-left: 20px;
+    }
+
+    .preview-content code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.85rem;
+    }
+
+    .preview-content pre {
+      background: var(--code-block-bg);
+      color: var(--code-block-text);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-bottom: 12px;
+    }
+
+    .preview-content pre code {
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    .preview-content blockquote {
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      margin: 12px 0;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .save-message {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 90%;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .save-message.success {
+      background: var(--save-success-bg);
+      color: var(--save-success-text);
+    }
+
+    .save-message.error {
+      background: var(--save-error-bg);
+      color: var(--save-error-text);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: inherit;
+      padding: 0;
+      line-height: 1;
+      font-family: inherit;
+    }
+
+    /* ===== View Toggle (for preview only) ===== */
+    .view-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .view-toggle button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-family: inherit;
+    }
+
+    .view-toggle button.active {
+      background: white;
+      color: #333;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ===== Mobile / Portrait styles ===== */
+    @media (max-width: 768px) {
+      .menu-btn { display: block; }
+      .back-btn { display: block; }
+
+      .btn-text { display: none; }
+      .btn { padding: 8px 10px; }
+
+      .header { padding: 8px 10px; }
+      .app-title { font-size: 1rem; }
+
+      /* Hide resizer on mobile - sidebar is a drawer */
+      .sidebar-resizer { display: none; }
+
+      .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 85%;
+        max-width: 320px;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease, background-color 0.3s;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar.dragging {
+        transition: none !important;
+      }
+
+      .backdrop {
+        display: block;
+        position: absolute;
+        inset: 0;
+        background: var(--backdrop-bg);
+        z-index: 99;
+        transition: opacity 0.25s;
+      }
+
+      .editor-area.hidden-mobile { display: none; }
+
+      .repo-select {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+      }
+
+      .doc-item { padding: 12px 14px; }
+      .doc-name { font-size: 0.9rem; }
+
+      .editor-header { padding: 8px; }
+      .doc-title-input { font-size: 0.95rem; }
+
+      .text-editor {
+        font-size: 13px;
+        padding: 12px;
+      }
+
+      .auth-view {
+        padding: 16px;
+        align-items: flex-start;
+        overflow-y: auto;
+      }
+
+      .auth-container {
+        padding: 24px 20px;
+        border-radius: 10px;
+        margin-top: 5vh;
+        max-width: 100%;
+      }
+
+      .logo h1 { font-size: 2rem; }
+      .logo p { font-size: 0.85rem; }
+
+      .btn-github, .btn-full {
+        padding: 14px 16px;
+        font-size: 0.95rem;
+      }
+
+      .form-group input {
+        padding: 12px 14px;
+        font-size: 16px;
+      }
+
+      .theme-toggle {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .auth-container { padding: 20px 16px; }
+      .logo h1 { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- View Toggle (preview only - remove in real app) -->
+  <div class="view-toggle">
+    <span>View:</span>
+    <button id="btn-auth" class="active" onclick="showView('auth')">Auth</button>
+    <button id="btn-main" onclick="showView('main')">Main</button>
+    <span style="margin-left:8px">|</span>
+    <button onclick="toggleMobile()">📱 Mobile</button>
+  </div>
+
+  <div id="app">
+    <!-- ===== Auth View ===== -->
+    <div id="auth-view" class="auth-view">
+      <div class="auth-container">
+        <div class="logo">
+          <h1>PageUp</h1>
+          <p>A lightweight document management tool for GitHub</p>
+        </div>
+
+        <div class="auth-form">
+          <div class="error-message hidden" id="auth-error"></div>
+
+          <button class="btn-github" onclick="authLoginGithub()">
+            <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            Login with GitHub
+          </button>
+
+          <div class="divider"><span>or</span></div>
+
+          <!-- 这里的链接可以放个跳转 -->
+          <div class="form-group">
+            <label for="token">Personal Access Token</label>
+            <input id="token" type="password" placeholder="Enter your GitHub PAT" />
+            <small class="hint">
+              Create one at https://github.com/settings/tokens 
+            </small>
+          </div>
+
+          <button class="btn-full btn-primary" onclick="authLoginToken()">
+            Login with Token
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Main View ===== -->
+    <div id="main-view" class="main-view hidden">
+      <header class="header">
+        <div class="header-left">
+          <button class="menu-btn" onclick="toggleSidebar()">☰</button> <!--这个经常被PageUp还是其他元件盖住,特别是在手机下-->
+          <h1 class="app-title">PageUp</h1>
+        </div>
+
+        <div class="header-center">
+          <!-- 深色模式切换按钮 - 位于 repo-select 左边 -->
+          <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
+            <span class="icon-moon">🌙</span>
+            <span class="icon-sun">☀️</span>
+          </button>
+          <select class="repo-select" onchange="changeRepo(this.value)">
+            <option value="">Select repo</option>
+            <option value="user/pageup" selected>user/pageup</option>
+            <option value="user/docs">user/docs</option>
+            <option value="user/notes">user/notes</option>
+          </select>
+        </div>
+
+        <div class="header-right">
+          <button class="btn btn-push-all" onclick="pushAll()" title="Push all pending changes">
+            <span>↑</span>
+            <span class="btn-text">Push All</span>
+            <span class="badge" id="pending-count">2</span>
+          </button>
+          <button class="btn btn-icon" onclick="logout()" title="Logout">⏻</button>
+        </div>
+      </header>
+
+      <div class="main-content" id="main-content">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-header">
+            <h2>Documents</h2>
+            <button class="btn btn-sm btn-primary" onclick="createDoc()">+ New</button>
+          </div>
+
+          <div class="doc-list" id="doc-list">
+            <!-- Documents will be rendered here -->
+          </div>
+        </aside>
+
+        <!-- 可拖拽缩放的分隔条 -->
+        <div class="sidebar-resizer" id="sidebar-resizer" title="Drag to resize"></div>
+
+        <main class="editor-area" id="editor-area">
+          <div class="editor-wrapper" id="editor-wrapper">
+            <!-- Empty state -->
+            <div class="no-doc-selected" id="no-doc">
+              <div class="icon">📄</div>
+              <h2>Select a document</h2>
+              <p>Choose a document from the list or create a new one</p>
+            </div>
+
+            <!-- Editor (hidden by default) -->
+            <div class="editor-wrapper hidden" id="editor">
+              <div class="editor-header">
+                <button class="back-btn" onclick="backToList()">‹</button>
+                <input class="doc-title-input" id="doc-title" value="README.md" />
+                <div class="editor-actions">
+                  <button class="btn btn-save" onclick="saveLocal()" title="Save to local draft">
+                    <span>💾</span>
+                    <span class="btn-text">Save</span>
+                  </button>
+                  <button class="btn btn-push" onclick="pushDoc()" title="Push to GitHub">
+                    <span>↑</span>
+                    <span class="btn-text">Push</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="status-bar">
+                <span class="status-pill status-draft">● Local draft saved</span>
+              </div>
+
+              <div class="editor-body">
+                <div class="editor-tabs">
+                  <button class="tab active" onclick="switchTab('edit', this)">Edit</button>
+                  <button class="tab" onclick="switchTab('preview', this)">Preview</button>
+                </div>
+
+                <div class="editor-content">
+                  <textarea
+                    class="text-editor"
+                    id="text-editor"
+                    placeholder="Start writing your document here..."
+                  ># PageUp
+
+A lightweight document management tool for GitHub.
+
+## Features
+
+- **Cross-platform** - Works on desktop and mobile
+- **Local drafts** - Save your work offline
+- **One-click push** - Sync to GitHub when ready
+
+## Usage
+
+1. Login with your GitHub token
+2. Select a repository
+3. Create or edit documents
+4. Save locally, then push when ready
+
+```javascript
+function hello() {
+  console.log("Hello, PageUp!");
+}
+```
+
+> Tip: Use **Save** for local drafts, **Push** to sync to GitHub.</textarea>
+                  <div class="preview-content hidden" id="preview-content"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div class="backdrop hidden" id="backdrop" onclick="toggleSidebar()" style="display:none"></div>
+    </div>
+
+    <!-- Save message toast -->
+    <div class="save-message success hidden" id="save-msg">
+      <span id="save-msg-text">Saved to local draft</span>
+      <button class="close-btn" onclick="document.getElementById('save-msg').classList.add('hidden')">×</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== Mock data =====
+    const documents = [
+      { name: 'README.md', path: 'docs/README.md', size: 1024, hasDraft: true },
+      { name: 'CHANGELOG.md', path: 'docs/CHANGELOG.md', size: 2560, hasDraft: true },
+      { name: 'guide.md', path: 'docs/guide.md', size: 5120, hasDraft: false },
+      { name: 'api-reference.md', path: 'docs/api-reference.md', size: 8192, hasDraft: false },
+      { name: 'todo.txt', path: 'docs/todo.txt', size: 128, hasDraft: false },
+    ];
+
+    let selectedDoc = null;
+    let isMobile = window.innerWidth <= 768;
+    let sidebarOpen = false;
+
+    // ===== Theme (Dark Mode) =====
+    function initTheme() {
+      // Load saved theme from localStorage, default to light
+      const savedTheme = localStorage.getItem('pageup-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('pageup-theme', next);
+    }
+
+    initTheme();
+
+    // ===== View switching (preview only) =====
+    function showView(view) {
+      document.getElementById('auth-view').classList.toggle('hidden', view !== 'auth');
+      document.getElementById('main-view').classList.toggle('hidden', view !== 'main');
+      document.getElementById('btn-auth').classList.toggle('active', view === 'auth');
+      document.getElementById('btn-main').classList.toggle('active', view === 'main');
+    }
+
+    function toggleMobile() {
+      const width = prompt('Enter width in px (e.g., 375 for iPhone):', '375');
+      if (width) {
+        document.body.style.maxWidth = width + 'px';
+        document.body.style.margin = '0 auto';
+        document.body.style.borderLeft = '1px solid #ccc';
+        document.body.style.borderRight = '1px solid #ccc';
+        document.body.style.boxShadow = '0 0 40px rgba(0,0,0,0.2)';
+        window.dispatchEvent(new Event('resize'));
+      }
+    }
+
+    // ===== Auth =====
+    function authLoginGithub() {
+      const err = document.getElementById('auth-error');
+      err.textContent = 'OAuth login is not available in this preview. Please use a Personal Access Token.';
+      err.classList.remove('hidden');
+    }
+
+    function authLoginToken() {
+      const token = document.getElementById('token').value;
+      if (!token.trim()) {
+        const err = document.getElementById('auth-error');
+        err.textContent = 'Please enter a token';
+        err.classList.remove('hidden');
+        return;
+      }
+      showView('main');
+      renderDocList();
+    }
+
+    function logout() {
+      showView('auth');
+    }
+
+    // ===== Document list =====
+    function renderDocList() {
+      const list = document.getElementById('doc-list');
+      list.innerHTML = '';
+
+      if (documents.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>No documents found</p><p class="hint">Create a new document to get started</p></div>';
+        return;
+      }
+
+      documents.forEach((doc, idx) => {
+        const item = document.createElement('div');
+        item.className = 'doc-item';
+        if (doc.hasDraft) item.classList.add('has-draft');
+        if (selectedDoc === idx) item.classList.add('active');
+        item.onclick = () => selectDoc(idx);
+
+        item.innerHTML = `
+          <div class="doc-info">
+            <span class="doc-name">${doc.name}</span>
+            ${doc.hasDraft ? '<span class="draft-badge">draft</span>' : ''}
+          </div>
+          <span class="doc-size">${formatSize(doc.size)}</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function selectDoc(idx) {
+      selectedDoc = idx;
+      const doc = documents[idx];
+      document.getElementById('doc-title').value = doc.name;
+      document.getElementById('no-doc').classList.add('hidden');
+      document.getElementById('editor').classList.remove('hidden');
+      renderDocList();
+
+      // On mobile, close sidebar when doc is selected
+      if (window.innerWidth <= 768) {
+        closeSidebar();
+      }
+    }
+
+    function createDoc() {
+      let name = 'new-document.md';
+      let counter = 1;
+      while (documents.some(d => d.name === name)) {
+        name = `new-document-${counter}.md`;
+        counter++;
+      }
+      documents.push({ name, path: `docs/${name}`, size: 0, hasDraft: false });
+      selectDoc(documents.length - 1);
+      document.getElementById('doc-title').value = name;
+    }
+
+    function changeRepo(value) {
+      if (value) {
+        showToast('Switched to ' + value);
+      }
+    }
+
+    // ===== Editor =====
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+
+      const editor = document.getElementById('text-editor');
+      const preview = document.getElementById('preview-content');
+
+      if (tab === 'edit') {
+        editor.classList.remove('hidden');
+        preview.classList.add('hidden');
+      } else {
+        editor.classList.add('hidden');
+        preview.classList.remove('hidden');
+        // Simple markdown preview
+        preview.innerHTML = renderMarkdown(editor.value);
+      }
+    }
+
+    function renderMarkdown(text) {
+      // Very simple markdown renderer for preview
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // Code blocks
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Headers
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+      // Bold
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      // Blockquote
+      html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+      // List items
+      html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+      // Paragraphs
+      html = html.split(/\n\n+/).map(block => {
+        if (block.startsWith('<')) return block;
+        return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
+      }).join('\n');
+
+      return html;
+    }
+
+    function saveLocal() {
+      showToast('Saved to local draft ✓');
+      if (selectedDoc !== null) {
+        documents[selectedDoc].hasDraft = true;
+        renderDocList();
+        updatePendingCount();
+      }
+    }
+
+    function pushDoc() {
+      showToast('Pushed to GitHub ✓', 'success');
+      if (selectedDoc !== null) {
+        documents[selectedDoc].hasDraft = false;
+        renderDocList();
+        updatePendingCount();
+      }
+    }
+
+    function pushAll() {
+      showToast('Pushing all changes...');
+      setTimeout(() => {
+        documents.forEach(d => d.hasDraft = false);
+        renderDocList();
+        updatePendingCount();
+        showToast('All changes pushed ✓', 'success');
+      }, 1000);
+    }
+
+    function backToList() {
+      selectedDoc = null;
+      document.getElementById('no-doc').classList.remove('hidden');
+      document.getElementById('editor').classList.add('hidden');
+      renderDocList();
+    }
+
+    // ===== Sidebar (mobile) =====
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('backdrop');
+      sidebarOpen = !sidebarOpen;
+      sidebar.classList.toggle('open', sidebarOpen);
+      backdrop.style.display = sidebarOpen ? 'block' : 'none';
+      backdrop.style.opacity = '';
+    }
+
+    function closeSidebar() {
+      sidebarOpen = false;
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('backdrop');
+      sidebar.classList.remove('open');
+      backdrop.style.display = 'none';
+      backdrop.style.opacity = '';
+    }
+
+    // ===== Mobile Swipe Gestures =====
+    function initMobileSwipe() {
+      const mainEl = document.getElementById('main-content');
+      const sidebarEl = document.getElementById('sidebar');
+      const backdrop = document.getElementById('backdrop');
+      if (!mainEl || !sidebarEl) return;
+
+      const EDGE_ZONE = 30;
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchCurrentX = 0;
+      let isHorizontalSwipe = false;
+      let swipeMode = null;
+      let sidebarWidth = 0;
+      let isDragging = false;
+
+      function onTouchStart(e) {
+        if (!isMobile) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchCurrentX = touchStartX;
+        isHorizontalSwipe = false;
+        swipeMode = null;
+
+        if (sidebarOpen) {
+          swipeMode = 'close';
+          sidebarWidth = sidebarEl.offsetWidth;
+        } else if (touchStartX <= EDGE_ZONE) {
+          swipeMode = 'open';
+          sidebarWidth = Math.min(mainEl.offsetWidth * 0.85, 320);
+        }
+      }
+
+      function onTouchMove(e) {
+        if (!isMobile || !swipeMode) return;
+        touchCurrentX = e.touches[0].clientX;
+        const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+        const deltaX = touchCurrentX - touchStartX;
+
+        if (!isHorizontalSwipe) {
+          if (Math.abs(deltaX) > deltaY && Math.abs(deltaX) > 10) {
+            isHorizontalSwipe = true;
+            isDragging = true;
+            sidebarEl.classList.add('dragging');
+            backdrop.style.display = 'block';
+          } else if (deltaY > 10) {
+            swipeMode = null;
+            return;
+          } else {
+            return;
+          }
+        }
+
+        e.preventDefault();
+
+        let translateX = 0;
+        if (swipeMode === 'open') {
+          translateX = Math.min(0, deltaX - sidebarWidth);
+          backdrop.style.opacity = Math.max(0, Math.min(1, deltaX / sidebarWidth));
+        } else {
+          translateX = Math.max(-sidebarWidth, deltaX);
+          backdrop.style.opacity = Math.max(0, Math.min(1, 1 + deltaX / sidebarWidth));
+        }
+        sidebarEl.style.transform = 'translateX(' + translateX + 'px)';
+      }
+
+      function onTouchEnd() {
+        if (!isMobile || !swipeMode || !isHorizontalSwipe) {
+          swipeMode = null;
+          isHorizontalSwipe = false;
+          return;
+        }
+
+        const deltaX = touchCurrentX - touchStartX;
+        const threshold = sidebarWidth * 0.4;
+
+        isDragging = false;
+        sidebarEl.classList.remove('dragging');
+        sidebarEl.style.transform = '';
+        backdrop.style.opacity = '';
+
+        if (swipeMode === 'open' && deltaX > threshold) {
+          sidebarOpen = true;
+          sidebarEl.classList.add('open');
+          backdrop.style.display = 'block';
+        } else if (swipeMode === 'close' && deltaX < -threshold) {
+          sidebarOpen = false;
+          sidebarEl.classList.remove('open');
+          backdrop.style.display = 'none';
+        } else if (swipeMode === 'open') {
+          backdrop.style.display = 'none';
+        }
+
+        swipeMode = null;
+        isHorizontalSwipe = false;
+      }
+
+      mainEl.addEventListener('touchstart', onTouchStart, { passive: true });
+      mainEl.addEventListener('touchmove', onTouchMove, { passive: false });
+      mainEl.addEventListener('touchend', onTouchEnd);
+      sidebarEl.addEventListener('touchstart', onTouchStart, { passive: true });
+      sidebarEl.addEventListener('touchmove', onTouchMove, { passive: false });
+      sidebarEl.addEventListener('touchend', onTouchEnd);
+    }
+
+    // ===== Sidebar Resizer (desktop) =====
+    function initSidebarResizer() {
+      const resizer = document.getElementById('sidebar-resizer');
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('main-content');
+      let isResizing = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      resizer.addEventListener('mousedown', (e) => {
+        // Don't resize on mobile
+        if (window.innerWidth <= 768) return;
+
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = sidebar.offsetWidth;
+        resizer.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+
+        const delta = e.clientX - startX;
+        let newWidth = startWidth + delta;
+
+        // Constrain to min/max
+        const minWidth = 180;
+        const maxWidth = Math.min(500, mainContent.offsetWidth - 300);
+        newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
+        sidebar.style.width = newWidth + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isResizing) {
+          isResizing = false;
+          resizer.classList.remove('dragging');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          // Save width to localStorage
+          localStorage.setItem('pageup-sidebar-width', sidebar.offsetWidth + 'px');
+        }
+      });
+
+      // Touch support for tablets
+      resizer.addEventListener('touchstart', (e) => {
+        if (window.innerWidth <= 768) return;
+        isResizing = true;
+        startX = e.touches[0].clientX;
+        startWidth = sidebar.offsetWidth;
+        resizer.classList.add('dragging');
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchmove', (e) => {
+        if (!isResizing) return;
+        const delta = e.touches[0].clientX - startX;
+        let newWidth = startWidth + delta;
+        const minWidth = 180;
+        const maxWidth = Math.min(500, mainContent.offsetWidth - 300);
+        newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+        sidebar.style.width = newWidth + 'px';
+      }, { passive: false });
+
+      document.addEventListener('touchend', () => {
+        if (isResizing) {
+          isResizing = false;
+          resizer.classList.remove('dragging');
+          localStorage.setItem('pageup-sidebar-width', sidebar.offsetWidth + 'px');
+        }
+      });
+
+      // Restore saved width
+      const savedWidth = localStorage.getItem('pageup-sidebar-width');
+      if (savedWidth && window.innerWidth > 768) {
+        sidebar.style.width = savedWidth;
+      }
+    }
+
+    // ===== Utilities =====
+    function formatSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function updatePendingCount() {
+      const count = documents.filter(d => d.hasDraft).length;
+      document.getElementById('pending-count').textContent = count;
+    }
+
+    function showToast(message, type) {
+      const msg = document.getElementById('save-msg');
+      const text = document.getElementById('save-msg-text');
+      text.textContent = message;
+      msg.classList.remove('hidden', 'success', 'error');
+      msg.classList.add(type === 'error' ? 'error' : 'success');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => msg.classList.add('hidden'), 2500);
+    }
+
+    // ===== Init =====
+    window.addEventListener('resize', () => {
+      isMobile = window.innerWidth <= 768;
+      // Reset sidebar width on mobile
+      if (isMobile) {
+        document.getElementById('sidebar').style.width = '';
+      }
+    });
+
+    // Initial render
+    renderDocList();
+    updatePendingCount();
+    initSidebarResizer();
+    initMobileSwipe();
+  </script>
+</body>
+</html>

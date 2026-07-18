@@ -1,0 +1,29 @@
+{
+  "identifier": "com.pageup.app",
+  "productName": "PageUp",
+  "version": "0.1.0",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com;"
+    },
+    "windows": [
+      {
+        "title": "PageUp",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "rpm", "appimage", "msi", "nsis"],
+    "icon": ["icons/icon.ico", "icons/icon.icns", "icons/icon.png"]
+  },
+  "plugins": {}
+}

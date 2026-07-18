@@ -1,0 +1,293 @@
+:root {
+  --bg-main: #f5f5f5;
+  --bg-surface: white;
+  --bg-surface-alt: #fafafa;
+  --bg-hover: #f5f5f5;
+  --bg-active: #e8eaf6;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --border: #e0e0e0;
+  --border-light: #f0f0f0;
+  --accent: #8DD6E0;
+  --accent-text: white;
+  --code-bg: #f4f4f4;
+  --code-block-bg: #2d2d2d;
+  --code-block-text: #f8f8f2;
+  --shadow-color: rgba(0, 0, 0, 0.05);
+  --input-bg: white;
+  --input-border: #e0e0e0;
+  --draft-badge-bg: #fef3c7;
+  --draft-badge-text: #92400e;
+  --status-draft-text: #92400e;
+  --status-draft-bg: #fef3c7;
+  --status-unsaved-text: #991b1b;
+  --status-unsaved-bg: #fee2e2;
+  --status-clean-text: #065f46;
+  --status-clean-bg: #d1fae5;
+  --scrollbar-thumb: #c0c0c0;
+  --scrollbar-thumb-hover: #a0a0a0;
+  --divider-line: #e0e0e0;
+  --auth-bg: #f2f2f2;
+  --auth-container-bg: #f2f2f2;
+  --backdrop-bg: rgba(0, 0, 0, 0.3);
+  --save-success-bg: #d1fae5;
+  --save-success-text: #065f46;
+  --save-error-bg: #fee2e2;
+  --save-error-text: #991b1b;
+}
+
+[data-theme="dark"] {
+  --bg-main: #0c0c0c;
+  --bg-surface: #2f2f2f;
+  --bg-surface-alt: #262626;
+  --bg-hover: #383838;
+  --bg-active: #3a3a3a;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-muted: #808080;
+  --border: #3a3a3a;
+  --border-light: #333;
+  --accent: #8DD6E0;
+  --accent-text: #0c0c0c;
+  --code-bg: #1a1a1a;
+  --code-block-bg: #1a1a1a;
+  --code-block-text: #f8f8f2;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --input-bg: #262626;
+  --input-border: #3a3a3a;
+  --draft-badge-bg: #4a3a1a;
+  --draft-badge-text: #fbbf24;
+  --status-draft-text: #fbbf24;
+  --status-draft-bg: #4a3a1a;
+  --status-unsaved-text: #f87171;
+  --status-unsaved-bg: #4a1a1a;
+  --status-clean-text: #34d399;
+  --status-clean-bg: #1a3a2a;
+  --scrollbar-thumb: #4a4a4a;
+  --scrollbar-thumb-hover: #5a5a5a;
+  --divider-line: #3a3a3a;
+  --auth-bg: #0c0c0c;
+  --auth-container-bg: #2f2f2f;
+  --backdrop-bg: rgba(0, 0, 0, 0.5);
+  --save-success-bg: #1a3a2a;
+  --save-success-text: #34d399;
+  --save-error-bg: #4a1a1a;
+  --save-error-text: #f87171;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#app {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+
+button {
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: inherit;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+.btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #8DD6E0;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px #2f2f2f30;
+}
+
+.btn-save {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .btn-save {
+  background: #3a3a3a;
+  color: var(--text-primary);
+}
+
+.btn-save:hover:not(:disabled) { background: var(--border); }
+
+.btn-push {
+  background: #238636;
+  color: white;
+}
+
+.btn-push:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px #2f2f2f30;
+}
+
+.btn-push-all {
+  background: #238636;
+  color: white;
+  position: relative;
+}
+
+.btn-push-all:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px #2f2f2f30;
+}
+
+.btn-icon {
+  padding: 8px 10px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .btn-icon {
+  background: #3a3a3a;
+}
+
+.btn-icon:hover { background: var(--border); }
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  min-width: 18px;
+  text-align: center;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.theme-toggle {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: #3a3a3a;
+}
+
+.theme-toggle:hover {
+  background: var(--border);
+  transform: scale(1.05);
+}
+
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+
+[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+.save-message {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 90%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.save-message.success {
+  background: var(--save-success-bg);
+  color: var(--save-success-text);
+}
+
+.save-message.error {
+  background: var(--save-error-bg);
+  color: var(--save-error-text);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  line-height: 1;
+  font-family: inherit;
+}
+
+.hidden { display: none !important; }
