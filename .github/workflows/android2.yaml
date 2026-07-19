@@ -61,20 +61,27 @@ jobs:
         run: |
           keytool -genkey -v -keystore pageup-release-key.keystore -alias pageup -keyalg RSA -keysize 2048 -validity 10000 -storepass pageup123 -keypass pageup123 -dname "CN=PageUp, OU=Development, O=PageUp Inc., L=Beijing, ST=Beijing, C=CN"
 
-      - name: Sign APK with apksigner
+      - name: Find apksigner and debug
         run: |
           APKSIGNER=$(find /usr/local/lib/android/sdk/build-tools -name "apksigner" | head -n 1)
-          unsigned_apk=$(find src-tauri/gen/android/app/build/outputs/apk -name "*unsigned*.apk" | head -n 1)
-          signed_apk="${unsigned_apk/unsigned/signed}"
-          echo "Signing: $unsigned_apk -> $signed_apk"
-          "$APKSIGNER" sign --ks pageup-release-key.keystore --ks-pass pass:pageup123 --key-pass pass:pageup123 --out "$signed_apk" "$unsigned_apk"
-          echo "Signed APK size: $(du -h "$signed_apk")"
+          echo "APKSIGNER path: $APKSIGNER"
+          ls -la "$(dirname "$APKSIGNER")"
+
+      - name: Sign APK with jarsigner first (v1 signature)
+        run: |
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore pageup-release-key.keystore -storepass pageup123 -keypass pageup123 src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk pageup
+
+      - name: Sign APK with apksigner (v2 signature)
+        run: |
+          APKSIGNER=$(find /usr/local/lib/android/sdk/build-tools -name "apksigner" | head -n 1)
+          echo "Using apksigner: $APKSIGNER"
+          "$APKSIGNER" sign --ks pageup-release-key.keystore --ks-pass pass:pageup123 --key-pass pass:pageup123 src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+          echo "Signing completed"
 
       - name: Verify APK signature
         run: |
           APKSIGNER=$(find /usr/local/lib/android/sdk/build-tools -name "apksigner" | head -n 1)
-          signed_apk=$(find src-tauri/gen/android/app/build/outputs/apk -name "*signed*.apk" | head -n 1)
-          "$APKSIGNER" verify "$signed_apk"
+          "$APKSIGNER" verify src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
           echo "Signature verification passed!"
 
       - name: List APK files
@@ -85,5 +92,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pageup-android
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*signed*.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
           if-no-files-found: error
