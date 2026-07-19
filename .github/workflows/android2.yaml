@@ -68,9 +68,22 @@ jobs:
           signed_apk="${unsigned_apk/unsigned/signed}"
           echo "Signing: $unsigned_apk -> $signed_apk"
           "$APKSIGNER" sign --ks pageup-release-key.keystore --ks-pass pass:pageup123 --key-pass pass:pageup123 --out "$signed_apk" "$unsigned_apk"
+          echo "Signed APK size: $(du -h "$signed_apk")"
+
+      - name: Verify APK signature
+        run: |
+          APKSIGNER=$(find /usr/local/lib/android/sdk/build-tools -name "apksigner" | head -n 1)
+          signed_apk=$(find src-tauri/gen/android/app/build/outputs/apk -name "*signed*.apk" | head -n 1)
+          "$APKSIGNER" verify "$signed_apk"
+          echo "Signature verification passed!"
+
+      - name: List APK files
+        run: |
+          ls -la src-tauri/gen/android/app/build/outputs/apk/universal/release/
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
           name: pageup-android
           path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*signed*.apk
+          if-no-files-found: error
