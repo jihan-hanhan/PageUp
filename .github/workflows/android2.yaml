@@ -57,8 +57,20 @@ jobs:
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
 
-      - name: Upload APK
+      - name: Generate keystore
+        run: |
+          keytool -genkey -v -keystore pageup-release-key.keystore -alias pageup -keyalg RSA -keysize 2048 -validity 10000 -storepass pageup123 -keypass pageup123 -dname "CN=PageUp, OU=Development, O=PageUp Inc., L=Beijing, ST=Beijing, C=CN"
+
+      - name: Sign APK with apksigner
+        run: |
+          APKSIGNER=$(find /usr/local/lib/android/sdk/build-tools -name "apksigner" | head -n 1)
+          unsigned_apk=$(find src-tauri/gen/android/app/build/outputs/apk -name "*unsigned*.apk" | head -n 1)
+          signed_apk="${unsigned_apk/unsigned/signed}"
+          echo "Signing: $unsigned_apk -> $signed_apk"
+          "$APKSIGNER" sign --ks pageup-release-key.keystore --ks-pass pass:pageup123 --key-pass pass:pageup123 --out "$signed_apk" "$unsigned_apk"
+
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
           name: pageup-android
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*signed*.apk
